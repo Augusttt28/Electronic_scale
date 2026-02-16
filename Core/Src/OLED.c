@@ -4,8 +4,8 @@
 #include "main.h"
 
 /*引脚配置*/
-#define OLED_W_SCL(x) HAL_GPIO_WritePin(OLED_W_SCL_GPIO_Port, OLED_W_SCL_Pin, x)
-#define OLED_W_SDA(x) HAL_GPIO_WritePin(OLED_W_SDA_GPIO_Port, OLED_W_SDA_Pin, x)    
+#define OLED_W_SCL(x)    HAL_GPIO_WritePin(OLED_W_SCL_GPIO_Port, OLED_W_SCL_Pin, (GPIO_PinState)(x))
+#define OLED_W_SDA(x)    HAL_GPIO_WritePin(OLED_W_SDA_GPIO_Port, OLED_W_SDA_Pin, (GPIO_PinState)(x)) 
 
 static uint8_t OLED_Buffer[8][128]; // 显存缓冲区，8页，每页128列
 static uint8_t current_page = 0;    // 当前页
@@ -14,8 +14,8 @@ static uint8_t current_col = 0;     // 当前列
 /*引脚初始化*/
 void OLED_I2C_Init(void)
 {
-    OLED_W_SCL(GPIO_PIN_SET);
-	OLED_W_SDA(GPIO_PIN_SET);
+  OLED_W_SCL(1);
+	OLED_W_SDA(1);
 }
 
 /**
@@ -25,10 +25,10 @@ void OLED_I2C_Init(void)
   */
 void OLED_I2C_Start(void)
 {
-	OLED_W_SDA(GPIO_PIN_SET);
-	OLED_W_SCL(GPIO_PIN_SET);
-	OLED_W_SDA(GPIO_PIN_RESET);
-	OLED_W_SCL(GPIO_PIN_RESET);
+	OLED_W_SDA(1);
+	OLED_W_SCL(1);
+	OLED_W_SDA(0);
+	OLED_W_SCL(0);
 }
 
 /**
@@ -38,9 +38,9 @@ void OLED_I2C_Start(void)
   */
 void OLED_I2C_Stop(void)
 {
-	OLED_W_SDA(GPIO_PIN_RESET);
-	OLED_W_SCL(GPIO_PIN_SET);
-	OLED_W_SDA(GPIO_PIN_SET);
+	OLED_W_SDA(0);
+	OLED_W_SCL(1);
+	OLED_W_SDA(1);
 }
 
 /**
@@ -53,12 +53,12 @@ void OLED_I2C_SendByte(uint8_t Byte)
     uint8_t i;
     for (i = 0; i < 8; i++)
     {
-        OLED_W_SDA((Byte & (0x80 >> i)) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        OLED_W_SCL(GPIO_PIN_SET);
-        OLED_W_SCL(GPIO_PIN_RESET);
+        OLED_W_SDA(!!(Byte & (0x80 >> i)));
+        OLED_W_SCL(1);
+		    OLED_W_SCL(0);
     }
-    OLED_W_SCL(GPIO_PIN_SET); // 额外的一个时钟，不处理应答信号
-    OLED_W_SCL(GPIO_PIN_RESET);
+    OLED_W_SCL(1);	//额外的一个时钟，不处理应答信号
+	  OLED_W_SCL(0);
 }
 
 
@@ -223,6 +223,40 @@ void OLED_ShowSignedNum(uint8_t Line, uint8_t Column, int32_t Number, uint8_t Le
 	for (i = 0; i < Length; i++)							
 	{
 		OLED_ShowChar(Line, Column + i + 1, Number1 / OLED_Pow(10, Length - i - 1) % 10 + '0');
+	}
+}
+
+void OLED_ShowFloat(uint8_t Line, uint8_t Column, float Number, uint8_t IntegerLength, uint8_t DecimalLength)
+{
+	uint8_t i;
+	uint32_t IntegerPart, DecimalPart;
+	float DecimalTemp;
+	
+	if (Number >= 0)
+	{
+		OLED_ShowChar(Line, Column, '+');
+		IntegerPart = (uint32_t)Number;
+	}
+	else
+	{
+		OLED_ShowChar(Line, Column, '-');
+		IntegerPart = (uint32_t)(-Number);
+	}
+	
+	for (i = 0; i < IntegerLength; i++)							
+	{
+		OLED_ShowChar(Line, Column + i + 1, IntegerPart / OLED_Pow(10, IntegerLength - i - 1) % 10 + '0');
+	}
+	
+	OLED_ShowChar(Line, Column + IntegerLength + 1, '.');
+	
+	DecimalTemp = Number >= 0 ? Number - IntegerPart : (-Number) - IntegerPart;
+	for (i = 0; i < DecimalLength; i++)
+	{
+		DecimalTemp *= 10;
+		DecimalPart = (uint32_t)DecimalTemp;
+		OLED_ShowChar(Line, Column + IntegerLength + 2 + i, DecimalPart % 10 + '0');
+		DecimalTemp -= DecimalPart;
 	}
 }
 

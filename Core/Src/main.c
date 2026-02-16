@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "OLED.h"
 #include "hx711.h"
+#include "serial.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,9 +79,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  OLED_Init();
-  HX711_Init();
-  HX711_KalmanInit(0.01f, 0.1f, 0.0f); // 初始化卡尔曼滤波器
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -94,6 +93,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  OLED_Init();
+  HX711_Init();
+  HX711_KalmanInit(0.01f, 0.1f, 0.0f);
+  OLED_ShowString(1, 1, "Weight:");
 
   // 1. 先去皮（确保秤上无物品）
   HX711_Tare();
@@ -112,9 +115,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
     Rawval = HX711_Read();
     Weight = HX711_GetWeight(Rawval);
+    Serial_Printf("weight:%.2f", Weight);
+    OLED_ShowFloat(1, 8, Weight, 4, 2);
+    HAL_Delay(100);
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
