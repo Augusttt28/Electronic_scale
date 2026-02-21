@@ -26,6 +26,7 @@
 #include "OLED.h"
 #include "hx711.h"
 #include "serial.h"
+#include "W25Q64.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,8 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 int32_t Rawval = 0;
 float Weight = 0;
+uint32_t SaveCount = 0;
+uint8_t WeightData[4];
 /* USER CODE END 0 */
 
 /**
@@ -96,6 +99,7 @@ int main(void)
   OLED_Init();
   HX711_Init();
   HX711_KalmanInit(0.01f, 0.1f, 0.0f);
+  W25Q64_Init();
   OLED_ShowString(1, 1, "Weight:");
 
   // 1. 先去皮（确保秤上无物品）
@@ -119,6 +123,23 @@ int main(void)
     Weight = HX711_GetWeight(Rawval);
     Serial_Printf("weight:%.2f", Weight);
     OLED_ShowFloat(1, 8, Weight, 4, 2);
+    
+    if (Weight >= 0.0f)
+    {
+        WeightData[0] = ((uint8_t *)&Weight)[0];
+        WeightData[1] = ((uint8_t *)&Weight)[1];
+        WeightData[2] = ((uint8_t *)&Weight)[2];
+        WeightData[3] = ((uint8_t *)&Weight)[3];
+        
+        if (SaveCount % 1024 == 0)
+        {
+            W25Q64_SectorErase(SaveCount * 4);
+        }
+        
+        W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
+        SaveCount++;
+    }
+    
     HAL_Delay(100);
     /* USER CODE END WHILE */
 
