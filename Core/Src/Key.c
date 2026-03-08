@@ -12,12 +12,15 @@
 #include "gpio.h"
 #include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
+#include "W25Q64.h"
+#include "OLED.h"
 
 #define KEY(x) HAL_GPIO_ReadPin(GPIOB, x)
 
-extern uint8_t SaveDataFlag;
 extern float Weight;
 extern uint32_t SaveCount;
+extern uint8_t WeightData[4];
+uint8_t SaveResult = 0;  // 0: 无操作, 1: 保存成功, 2: 重量为负
 
 Key_t Key_press = 
 {
@@ -107,7 +110,24 @@ uint8_t Key_scan(uint16_t Input_key)
                     //按键 1 任务：保存当前数据到 W25Q64
                     if (Weight >= 0.0f)
                     {
-                        SaveDataFlag = 1;
+                        WeightData[0] = ((uint8_t *)&Weight)[0];
+                        WeightData[1] = ((uint8_t *)&Weight)[1];
+                        WeightData[2] = ((uint8_t *)&Weight)[2];
+                        WeightData[3] = ((uint8_t *)&Weight)[3];
+                        
+                        if (SaveCount % 1024 == 0)
+                        {
+                            W25Q64_SectorErase(SaveCount * 4);
+                        }
+                        
+                        W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
+                        SaveCount++;
+                        
+                        SaveResult = 1;  // 保存成功
+                    }
+                    else
+                    {
+                        SaveResult = 2;  // 重量为负
                     }
                     break;
             }

@@ -24,6 +24,8 @@ typedef struct
     uint32_t Last_time;//每一步处理后的时间
 }Key_t;
 
+extern uint8_t SaveResult;
+
 uint8_t Key_scan(uint16_t Input_key);
 
 

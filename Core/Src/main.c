@@ -66,8 +66,8 @@ float Weight = 0;
 uint32_t SaveCount = 0;
 uint8_t WeightData[4];
 uint8_t CalibrateState = 0;
-uint8_t SaveDataFlag = 0;
 float KnownWeight = 100.0f;
+uint32_t SaveDisplayTime = 0;
 /* USER CODE END 0 */
 
 /**
@@ -128,54 +128,45 @@ int main(void)
   {
     Rawval = HX711_Read();
     Weight = HX711_GetWeight(Rawval);
-    Serial_Printf("weight:%.2f\n", Weight);
+    Serial_Printf("weight:%.2f\r\n", Weight);
     OLED_ShowFloat(1, 8, Weight, 4, 2);
     
-    Key_scan(Key1);
-    
-    if (SaveDataFlag == 1)
+    // 处理保存结果显示
+    if (SaveResult != 0)
     {
-        if (Weight >= 0.0f)
+        if (SaveResult == 1)
         {
-            WeightData[0] = ((uint8_t *)&Weight)[0];
-            WeightData[1] = ((uint8_t *)&Weight)[1];
-            WeightData[2] = ((uint8_t *)&Weight)[2];
-            WeightData[3] = ((uint8_t *)&Weight)[3];
-            
-            if (SaveCount % 1024 == 0)
-            {
-                W25Q64_SectorErase(SaveCount * 4);
-            }
-            
-            W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
-            SaveCount++;
-            
             OLED_ShowString(2, 1, "Save OK!     ");
-            SaveDataFlag = 0;
-            HAL_Delay(500);
         }
-        else
+        else if (SaveResult == 2)
         {
             OLED_ShowString(2, 1, "Weight < 0!  ");
-            SaveDataFlag = 0;
-            HAL_Delay(500);
         }
+        SaveDisplayTime = HAL_GetTick();
+        SaveResult = 0;
     }
     
-    if (CalibrateState == 1)
+    // 1s 后清除显示
+    if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
     {
-        OLED_Clear();
-        OLED_ShowString(1, 1, "Put Weight!");
-        OLED_ShowString(2, 1, "g");
-        HAL_Delay(2000);
-        HX711_Calibrate(KnownWeight);
-        OLED_Clear();
-        OLED_ShowString(1, 1, "Calib OK!");
-        HAL_Delay(1000);
-        OLED_Clear();
-        OLED_ShowString(1, 1, "Weight:");
-        CalibrateState = 0;
+        OLED_ShowString(2, 1, "             ");
+        SaveDisplayTime = 0;
     }
+    
+    // if (CalibrateState == 1)
+    // {
+    //     OLED_Clear();
+    //     OLED_ShowString(1, 1, "Put Weight!");
+    //     OLED_ShowString(2, 1, "g");
+    //     HAL_Delay(2000);
+    //     HX711_Calibrate(KnownWeight);
+    //     OLED_Clear();
+    //     OLED_ShowString(1, 1, "Calib OK!");
+    //     HAL_Delay(1000);
+    //     OLED_Clear();
+    //     OLED_ShowString(1, 1, "Weight:");
+    //     CalibrateState = 0;
+    // }
     
     HAL_Delay(100);
     /* USER CODE END WHILE */
