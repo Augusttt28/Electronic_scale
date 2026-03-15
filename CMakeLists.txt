@@ -48,6 +48,12 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+    Core/Src/hx711.c
+    Core/Src/Key.c
+    Core/Src/MySPI.c
+    Core/Src/Serial.c
+    Core/Src/OLED.c
+    Core/Src/W25Q64.c
 )
 
 # Add include paths
@@ -58,6 +64,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+)
+
+# Enable float printf support
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
+    -u_printf_float
+    -u_scanf_float
 )
 
 # Add linked libraries
