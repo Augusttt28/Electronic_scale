@@ -25,12 +25,6 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/gpio.c
     ../../Core/Src/tim.c
     ../../Core/Src/usart.c
-    ../../Core/Src/hx711.c
-    ../../Core/Src/Serial.c
-    ../../Core/Src/OLED.c
-    ../../Core/Src/MySPI.c
-    ../../Core/Src/W25Q64.c
-    ../../Core/Src/Key.c
     ../../Core/Src/stm32f1xx_it.c
     ../../Core/Src/stm32f1xx_hal_msp.c
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c

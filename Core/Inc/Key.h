@@ -5,7 +5,11 @@
 #include "gpio.h"
 
 #define Key1 Key1_Pin
+#define Key2 Key2_Pin
+#define Key3 Key3_Pin
+#define Key4 Key4_Pin
 #define Key_Delay_time 20
+#define Key_LongPress_time 60
 
 //枚举，显示按键所有的状态
 typedef enum
@@ -13,6 +17,7 @@ typedef enum
     KEY_UP = 0,
     KEY_DOWN_Dely,
     KEY_DOWN,
+    KEY_LONG_PRESS,
     KEY_UP_Delay,
     KEY_PROCESS_TASK
 }Key_state;
@@ -25,6 +30,9 @@ typedef struct
 }Key_t;
 
 extern uint8_t SaveResult;
+
+extern float UnitPrice;
+extern float TotalPrice;
 
 uint8_t Key_scan(uint16_t Input_key);
 

@@ -81,10 +81,16 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(HX711_SCK_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : HX711_OUT_Pin Key1_Pin */
-  GPIO_InitStruct.Pin = HX711_OUT_Pin|Key1_Pin;
+  /*Configure GPIO pin : HX711_OUT_Pin */
+  GPIO_InitStruct.Pin = HX711_OUT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(HX711_OUT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Key1_Pin Key2_Pin Key3_Pin Key4_Pin */
+  GPIO_InitStruct.Pin = Key1_Pin|Key2_Pin|Key3_Pin|Key4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : OLED_W_SCL_Pin OLED_W_SDA_Pin */

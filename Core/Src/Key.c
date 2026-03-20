@@ -14,12 +14,15 @@
 #include <stdint.h>
 #include "W25Q64.h"
 #include "OLED.h"
+#include "hx711.h"
 
 #define KEY(x) HAL_GPIO_ReadPin(GPIOB, x)
 
 extern float Weight;
 extern uint32_t SaveCount;
 extern uint8_t WeightData[4];
+extern float UnitPrice;
+extern float TotalPrice;
 uint8_t SaveResult = 0;  // 0: 无操作, 1: 保存成功, 2: 重量为负
 
 Key_t Key_press = 
@@ -77,6 +80,10 @@ uint8_t Key_scan(uint16_t Input_key)
             if (Input_Pin == 0)
             {
                 Key_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
+                if (Input_Time > Key_press.Last_time + Key_LongPress_time) 
+                {
+                    Key_press.State = KEY_LONG_PRESS;
+                }
             }
             else
             {
@@ -86,6 +93,19 @@ uint8_t Key_scan(uint16_t Input_key)
             }
             break;
         
+        case  KEY_LONG_PRESS:
+            if (Input_Pin == 0) 
+            {
+                Key_press.State = KEY_LONG_PRESS;//一直为长按状态
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key_press.State = KEY_UP_Delay;
+                Key_press.Last_time = Input_Time;
+            }
+            break;
+            
         //按键抬起消抖
         case KEY_UP_Delay:
             if (Input_Pin == 0)
@@ -128,6 +148,29 @@ uint8_t Key_scan(uint16_t Input_key)
                     else
                     {
                         SaveResult = 2;  // 重量为负
+                    }
+                    break;
+                
+                case Key2:
+                    //按键2 任务：去皮
+                    HX711_Tare();
+                    break;
+                
+                case Key3:
+                    //按键3 任务：增加单价
+                    UnitPrice += 1.0f;
+                    if (UnitPrice > 999.0f)
+                    {
+                        UnitPrice = 999.0f;
+                    }
+                    break;
+                
+                case Key4:
+                    //按键4 任务：减少单价
+                    UnitPrice -= 1.0f;
+                    if (UnitPrice < 0.0f)
+                    {
+                        UnitPrice = 0.0f;
                     }
                     break;
             }
