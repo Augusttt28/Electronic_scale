@@ -146,19 +146,19 @@ int main(void)
     // 显示单价和总价
     OLED_ShowString(2, 1, "Price:");
     OLED_ShowFloat(2, 7, UnitPrice, 3, 2);
-    OLED_ShowString(2, 11, "Total:");
-    OLED_ShowFloat(2, 17, TotalPrice, 4, 2);
+    OLED_ShowString(3, 1, "Total:");
+    OLED_ShowFloat(3, 7, TotalPrice, 4, 2);
     
     // 处理保存结果显示
     if (SaveResult != 0)
     {
         if (SaveResult == 1)
         {
-            OLED_ShowString(3, 1, "Save OK!     ");
+            OLED_ShowString(4, 1, "Save OK!     ");
         }
         else if (SaveResult == 2)
         {
-            OLED_ShowString(3, 1, "Weight < 0!  ");
+            OLED_ShowString(4, 1, "Weight < 0!  ");
         }
         SaveDisplayTime = HAL_GetTick();
         SaveResult = 0;
@@ -167,7 +167,7 @@ int main(void)
     // 1s 后清除显示
     if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
     {
-        OLED_ShowString(3, 1, "             ");
+        OLED_ShowString(4, 1, "             ");
         SaveDisplayTime = 0;
     }
     
@@ -242,10 +242,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == (&htim3))
     {
-        Key_scan(Key1);
-        Key_scan(Key2);
-        Key_scan(Key3);
-        Key_scan(Key4);
+      Key1_scan(Key1);
+      Key2_scan(Key2);
+      Key3_scan(Key3);
+      Key4_scan(Key4);
     }
 }
 /* USER CODE END 4 */

@@ -31,14 +31,35 @@ Key_t Key_press =
     .Last_time = 0
 };
 
+
+Key_t Key2_press = 
+{
+    .State = KEY_UP,
+    .Last_time = 0
+};
+
+
+Key_t Key3_press = 
+{
+    .State = KEY_UP,
+    .Last_time = 0
+};
+
+Key_t Key4_press = 
+{
+    .State = KEY_UP,
+    .Last_time = 0
+};
+
+
 /************************************************************************************************************
- * 函数名称: Key_scan
+ * 函数名称: Key1_scan
  * 函数功能: 按键扫描
  * 输入参数: 无
  * 输出参数: Key_press.State
  * 返回值: 当前按键状态
 ************************************************************************************************************/
-uint8_t Key_scan(uint16_t Input_key)
+uint8_t Key1_scan(uint16_t Input_key)
 {
     uint8_t Input_Pin = KEY(Input_key);
     uint32_t Input_Time = HAL_GetTick();
@@ -47,7 +68,7 @@ uint8_t Key_scan(uint16_t Input_key)
     {
         //按键未按下
         case KEY_UP:
-            if (Input_Pin == 1)
+            if (Input_Pin == 0)
             {
                 Key_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
             }
@@ -61,7 +82,7 @@ uint8_t Key_scan(uint16_t Input_key)
         
         //监测到按键按下，进入按下消抖
         case KEY_DOWN_Dely:
-            if (Input_Pin == 1)
+            if (Input_Pin == 0)
             {
                 Key_press.State = KEY_UP;//误触发
             }
@@ -77,7 +98,7 @@ uint8_t Key_scan(uint16_t Input_key)
         
         //按键按下状态
         case KEY_DOWN:
-            if (Input_Pin == 0)
+            if (Input_Pin == 1)
             {
                 Key_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
                 if (Input_Time > Key_press.Last_time + Key_LongPress_time) 
@@ -94,9 +115,12 @@ uint8_t Key_scan(uint16_t Input_key)
             break;
         
         case  KEY_LONG_PRESS:
-            if (Input_Pin == 0) 
+            if (Input_Pin == 1) 
             {
                 Key_press.State = KEY_LONG_PRESS;//一直为长按状态
+                //按键 1 任务：清空记录
+                SaveCount = 0;
+                W25Q64_ClearAllRecords();                                                   
             }
             else
             {
@@ -108,7 +132,7 @@ uint8_t Key_scan(uint16_t Input_key)
             
         //按键抬起消抖
         case KEY_UP_Delay:
-            if (Input_Pin == 0)
+            if (Input_Pin == 1)
             {
                 Key_press.State = KEY_DOWN;//误触发
             }
@@ -124,56 +148,29 @@ uint8_t Key_scan(uint16_t Input_key)
         
         //处理任务状态
         case KEY_PROCESS_TASK:
-            switch (Input_key) 
+            //按键 1 任务：保存当前数据到 W25Q64
+            if (Weight >= 0.0f)
             {
-                case Key1:
-                    //按键 1 任务：保存当前数据到 W25Q64
-                    if (Weight >= 0.0f)
-                    {
-                        WeightData[0] = ((uint8_t *)&Weight)[0];
-                        WeightData[1] = ((uint8_t *)&Weight)[1];
-                        WeightData[2] = ((uint8_t *)&Weight)[2];
-                        WeightData[3] = ((uint8_t *)&Weight)[3];
-                        
-                        if (SaveCount % 1024 == 0)
-                        {
-                            W25Q64_SectorErase(SaveCount * 4);
-                        }
-                        
-                        W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
-                        SaveCount++;
-                        
-                        SaveResult = 1;  // 保存成功
-                    }
-                    else
-                    {
-                        SaveResult = 2;  // 重量为负
-                    }
-                    break;
+                WeightData[0] = ((uint8_t *)&Weight)[0];
+                WeightData[1] = ((uint8_t *)&Weight)[1];
+                WeightData[2] = ((uint8_t *)&Weight)[2];
+                WeightData[3] = ((uint8_t *)&Weight)[3];
                 
-                case Key2:
-                    //按键2 任务：去皮
-                    HX711_Tare();
-                    break;
+                if (SaveCount % 1024 == 0)
+                {
+                    W25Q64_SectorErase(SaveCount * 4);
+                }
                 
-                case Key3:
-                    //按键3 任务：增加单价
-                    UnitPrice += 1.0f;
-                    if (UnitPrice > 999.0f)
-                    {
-                        UnitPrice = 999.0f;
-                    }
-                    break;
+                W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
+                SaveCount++;
                 
-                case Key4:
-                    //按键4 任务：减少单价
-                    UnitPrice -= 1.0f;
-                    if (UnitPrice < 0.0f)
-                    {
-                        UnitPrice = 0.0f;
-                    }
-                    break;
+                SaveResult = 1;  // 保存成功
             }
+            else
+            {
+                SaveResult = 2;  // 重量为负
+            }                      
+    
             Key_press.State = KEY_UP;
             break;
     
@@ -184,3 +181,342 @@ uint8_t Key_scan(uint16_t Input_key)
     return Key_press.State;
 }
 
+
+/************************************************************************************************************
+ * 函数名称: Key2_scan
+ * 函数功能: 按键扫描
+ * 输入参数: 无
+ * 输出参数: Key_press.State
+ * 返回值: 当前按键状态
+************************************************************************************************************/
+uint8_t Key2_scan(uint16_t Input_key)
+{
+    uint8_t Input_Pin = KEY(Input_key);
+    uint32_t Input_Time = HAL_GetTick();
+
+    switch (Key2_press.State)
+    {
+        //按键未按下
+        case KEY_UP:
+            if (Input_Pin == 0)
+            {
+                Key2_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
+            }
+            else
+            {
+                //检测到按下，进入按下消抖状态
+                Key2_press.State = KEY_DOWN_Dely;
+                Key2_press.Last_time = Input_Time;
+            }
+            break;    
+        
+        //监测到按键按下，进入按下消抖
+        case KEY_DOWN_Dely:
+            if (Input_Pin == 0)
+            {
+                Key2_press.State = KEY_UP;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key2_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key2_press.State = KEY_DOWN;
+                    //还能干其他事情。。。
+                }               
+            }
+            break;
+        
+        //按键按下状态
+        case KEY_DOWN:
+            if (Input_Pin == 1)
+            {
+                Key2_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
+                //按键2 任务：去皮
+                HX711_Tare();     
+                if (Input_Time > Key2_press.Last_time + Key_LongPress_time) 
+                {
+                    Key2_press.State = KEY_LONG_PRESS;
+                }
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key2_press.State = KEY_UP_Delay;
+                Key2_press.Last_time = Input_Time;
+            }
+            break;
+        
+        case  KEY_LONG_PRESS:
+            if (Input_Pin == 1) 
+            {
+                Key2_press.State = KEY_LONG_PRESS;//一直为长按状态
+
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key2_press.State = KEY_UP_Delay;
+                Key2_press.Last_time = Input_Time;
+            }
+            break;
+            
+        //按键抬起消抖
+        case KEY_UP_Delay:
+            if (Input_Pin == 1)
+            {
+                Key2_press.State = KEY_DOWN;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key2_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key2_press.State = KEY_PROCESS_TASK;
+                    //还能干其他事情
+                }               
+            }        
+            break;
+        
+        //处理任务状态
+        case KEY_PROCESS_TASK:              
+                     
+            Key2_press.State = KEY_UP;
+            break;
+    
+    default:
+        break;
+    }
+
+    return Key2_press.State;
+}
+
+/************************************************************************************************************
+ * 函数名称: Key3_scan
+ * 函数功能: 按键扫描
+ * 输入参数: 无
+ * 输出参数: Key_press.State
+ * 返回值: 当前按键状态
+************************************************************************************************************/
+uint8_t Key3_scan(uint16_t Input_key)
+{
+    uint8_t Input_Pin = KEY(Input_key);
+    uint32_t Input_Time = HAL_GetTick();
+
+    switch (Key3_press.State)
+    {
+        //按键未按下
+        case KEY_UP:
+            if (Input_Pin == 0)
+            {
+                Key3_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
+            }
+            else
+            {
+                //检测到按下，进入按下消抖状态
+                Key3_press.State = KEY_DOWN_Dely;
+                Key3_press.Last_time = Input_Time;
+            }
+            break;    
+        
+        //监测到按键按下，进入按下消抖
+        case KEY_DOWN_Dely:
+            if (Input_Pin == 0)
+            {
+                Key3_press.State = KEY_UP;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key3_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key3_press.State = KEY_DOWN;
+                    //还能干其他事情。。。
+                }               
+            }
+            break;
+        
+        //按键按下状态
+        case KEY_DOWN:
+            if (Input_Pin == 1)
+            {
+                Key3_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
+                UnitPrice += 1.0f;
+                if (UnitPrice > 999.0f)
+                {
+                    UnitPrice = 999.0f;
+                }     
+                if (Input_Time > Key3_press.Last_time + Key_LongPress_time) 
+                {
+                    Key3_press.State = KEY_LONG_PRESS;
+                }
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key3_press.State = KEY_UP_Delay;
+                Key3_press.Last_time = Input_Time;
+            }
+            break;
+        
+        case  KEY_LONG_PRESS:
+            if (Input_Pin == 1) 
+            {
+                Key3_press.State = KEY_LONG_PRESS;//一直为长按状态
+                //按键3 任务：增加单价
+                UnitPrice += 3.0f;
+                if (UnitPrice > 999.0f)
+                {
+                    UnitPrice = 999.0f;
+                }
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key3_press.State = KEY_UP_Delay;
+                Key3_press.Last_time = Input_Time;
+            }
+            break;
+            
+        //按键抬起消抖
+        case KEY_UP_Delay:
+            if (Input_Pin == 1)
+            {
+                Key3_press.State = KEY_DOWN;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key3_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key3_press.State = KEY_PROCESS_TASK;
+                    //还能干其他事情
+                }               
+            }        
+            break;
+        
+        //处理任务状态
+        case KEY_PROCESS_TASK:              
+            //按键3 任务：增加单价
+            
+            Key3_press.State = KEY_UP;
+            break;
+    
+    default:
+        break;
+    }
+
+    return Key3_press.State;
+}
+
+/************************************************************************************************************
+ * 函数名称: Key4_scan
+ * 函数功能: 按键扫描
+ * 输入参数: 无
+ * 输出参数: Key_press.State
+ * 返回值: 当前按键状态
+************************************************************************************************************/
+uint8_t Key4_scan(uint16_t Input_key)
+{
+    uint8_t Input_Pin = KEY(Input_key);
+    uint32_t Input_Time = HAL_GetTick();
+
+    switch (Key4_press.State)
+    {
+        //按键未按下
+        case KEY_UP:
+            if (Input_Pin == 0)
+            {
+                Key4_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
+            }
+            else
+            {
+                //检测到按下，进入按下消抖状态
+                Key4_press.State = KEY_DOWN_Dely;
+                Key4_press.Last_time = Input_Time;
+            }
+            break;    
+        
+        //监测到按键按下，进入按下消抖
+        case KEY_DOWN_Dely:
+            if (Input_Pin == 0)
+            {
+                Key4_press.State = KEY_UP;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key4_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key4_press.State = KEY_DOWN;
+                    //还能干其他事情。。。
+                }               
+            }
+            break;
+        
+        //按键按下状态
+        case KEY_DOWN:
+            if (Input_Pin == 1)
+            {
+                Key4_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
+                //按键4 任务：减少单价
+                UnitPrice -= 1.0f;
+                if (UnitPrice < 0.0f)
+                {
+                    UnitPrice = 0.0f;
+                }                
+                if (Input_Time > Key4_press.Last_time + Key_LongPress_time) 
+                {
+                    Key4_press.State = KEY_LONG_PRESS;
+                }
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key4_press.State = KEY_UP_Delay;
+                Key4_press.Last_time = Input_Time;
+            }
+            break;
+        
+        case  KEY_LONG_PRESS:
+            if (Input_Pin == 1) 
+            {
+                Key4_press.State = KEY_LONG_PRESS;//一直为长按状态
+                //按键4 任务：减少单价
+                UnitPrice -= 3.0f;
+                if (UnitPrice < 0.0f)
+                {
+                    UnitPrice = 0.0f;
+                }
+            }
+            else
+            {
+                //检测到抬起则进入消抖
+                Key4_press.State = KEY_UP_Delay;
+                Key4_press.Last_time = Input_Time;
+            }
+            break;
+            
+        //按键抬起消抖
+        case KEY_UP_Delay:
+            if (Input_Pin == 1)
+            {
+                Key4_press.State = KEY_DOWN;//误触发
+            }
+            else
+            {
+                if (Input_Time > Key4_press.Last_time + Key_Delay_time)//到达消抖时间
+                {
+                    Key4_press.State = KEY_PROCESS_TASK;
+                    //还能干其他事情
+                }               
+            }        
+            break;
+        
+        //处理任务状态
+        case KEY_PROCESS_TASK:
+                                
+            Key4_press.State = KEY_UP;
+            break;
+    
+    default:
+        break;
+    }
+
+    return Key4_press.State;
+}

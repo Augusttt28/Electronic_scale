@@ -9,7 +9,7 @@
 #define Key3 Key3_Pin
 #define Key4 Key4_Pin
 #define Key_Delay_time 20
-#define Key_LongPress_time 60
+#define Key_LongPress_time 500
 
 //枚举，显示按键所有的状态
 typedef enum
@@ -34,7 +34,10 @@ extern uint8_t SaveResult;
 extern float UnitPrice;
 extern float TotalPrice;
 
-uint8_t Key_scan(uint16_t Input_key);
+uint8_t Key1_scan(uint16_t Input_key);
+uint8_t Key2_scan(uint16_t Input_key);
+uint8_t Key3_scan(uint16_t Input_key);
+uint8_t Key4_scan(uint16_t Input_key);
 
 
 #endif 

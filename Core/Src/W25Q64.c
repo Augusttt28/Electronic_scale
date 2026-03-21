@@ -29,6 +29,7 @@ void W25Q64_ReadID(uint8_t *MID, uint16_t *DID)
 	MySPI_Stop();								//SPI终止
 }
 
+
 /**
   * 函    数：W25Q64写使能
   * 参    数：无
@@ -131,4 +132,36 @@ void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count)
 		DataArray[i] = MySPI_SwapByte(W25Q64_DUMMY_BYTE);	//依次在起始地址后读取数据
 	}
 	MySPI_Stop();								//SPI终止
+}
+
+
+/**
+  * 函    数：W25Q64芯片擦除（64MB）
+  * 参    数：无
+  * 返 回 值：无
+  */
+void W25Q64_ChipErase(void)
+{
+	W25Q64_WriteEnable();						//写使能
+	
+	MySPI_Start();								//SPI起始
+	MySPI_SwapByte(W25Q64_CHIP_ERASE);		//交换发送芯片擦除的指令
+	MySPI_Stop();								//SPI终止
+	
+	W25Q64_WaitBusy();							//等待忙
+}
+
+/**
+  * 函    数：W25Q64清空所有记录
+  * 参    数：无
+  * 返 回 值：无
+  */
+void W25Q64_ClearAllRecords(void)
+{
+	uint32_t i;
+	
+	for (i = 0; i < 2048; i++)
+	{
+		W25Q64_SectorErase(i * 4096);
+	}
 }
