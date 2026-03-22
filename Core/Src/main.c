@@ -108,8 +108,11 @@ int main(void)
   HX711_Init();
   HX711_KalmanInit(0.01f, 0.1f, 0.0f);
   W25Q64_Init();
-  OLED_ShowString(1, 1, "Weight:");
-
+  // OLED_ShowString(1, 1, "Weight:");
+  //显示重量
+  OLED_ShowCN(1, 1, 0, 1);
+  OLED_ShowCN(1, 2, 1, 1);
+  OLED_ShowString(1, 5, ":");
   // 1. 先去皮（确保秤上无物品）
   HX711_Tare();
   HAL_Delay(100);
@@ -131,7 +134,7 @@ int main(void)
     Rawval = HX711_Read();
     Weight = HX711_GetWeight(Rawval);
     Serial_Printf("weight:%.2f\r\n", Weight);
-    OLED_ShowFloat(1, 8, Weight, 4, 2);
+    OLED_ShowFloat(1, 8, Weight, 5, 2);
     
     // 计算总价
     if (Weight >= 0.0f)
@@ -147,7 +150,7 @@ int main(void)
     OLED_ShowString(2, 1, "Price:");
     OLED_ShowFloat(2, 7, UnitPrice, 3, 2);
     OLED_ShowString(3, 1, "Total:");
-    OLED_ShowFloat(3, 7, TotalPrice, 4, 2);
+    OLED_ShowFloat(3, 7, TotalPrice, 5, 2);
     
     // 处理保存结果显示
     if (SaveResult != 0)

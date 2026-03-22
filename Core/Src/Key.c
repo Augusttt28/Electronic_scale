@@ -232,7 +232,7 @@ uint8_t Key2_scan(uint16_t Input_key)
             {
                 Key2_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
                 //按键2 任务：去皮
-                HX711_Tare();     
+                  
                 if (Input_Time > Key2_press.Last_time + Key_LongPress_time) 
                 {
                     Key2_press.State = KEY_LONG_PRESS;
@@ -250,7 +250,7 @@ uint8_t Key2_scan(uint16_t Input_key)
             if (Input_Pin == 1) 
             {
                 Key2_press.State = KEY_LONG_PRESS;//一直为长按状态
-
+                HX711_Tare();  
             }
             else
             {
@@ -278,7 +278,7 @@ uint8_t Key2_scan(uint16_t Input_key)
         
         //处理任务状态
         case KEY_PROCESS_TASK:              
-                     
+            HX711_Tare();           
             Key2_press.State = KEY_UP;
             break;
     
