@@ -246,12 +246,7 @@ uint8_t Key2_scan(uint16_t Input_key)
         case KEY_DOWN:
             if (Input_Pin == 1)
             {
-                Key2_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
-                if (current_display_state == DISPLAY_WEIGHING) 
-                {
-                    HX711_Tare();
-                   
-                }
+                Key2_press.State = KEY_DOWN;
                 if (Input_Time > Key2_press.Last_time + Key_LongPress_time) 
                 {
                     Key2_press.State = KEY_LONG_PRESS;
@@ -268,23 +263,21 @@ uint8_t Key2_scan(uint16_t Input_key)
         case  KEY_LONG_PRESS:
             if (Input_Pin == 1) 
             {
-                Key2_press.State = KEY_LONG_PRESS;//一直为长按状态        
-                 if (current_display_state == DISPLAY_WEIGHING) 
+                Key2_press.State = KEY_LONG_PRESS;
+                
+                // if (current_display_state == DISPLAY_HISTORY)
+                // {
+                //     OLED_Clear();
+                //     current_display_state = DISPLAY_WEIGHING;
+                // }
+                if (current_display_state == DISPLAY_WEIGHING)
                 {
-                    OLED_Clear();
-                    current_display_state = DISPLAY_HISTORY;
+                    HX711_Tare();
                 }
-                else if(current_display_state == DISPLAY_HISTORY) 
-                {
-                    OLED_Clear();
-                    current_display_state = DISPLAY_WEIGHING;
-                }                            
             }
             else
             {
-                //检测到抬起则进入消抖
-                Key2_press.State = KEY_UP_Delay;
-                Key2_press.Last_time = Input_Time;
+                Key2_press.State = KEY_UP;
             }
             break;
             
@@ -305,8 +298,17 @@ uint8_t Key2_scan(uint16_t Input_key)
             break;
         
         //处理任务状态
-        case KEY_PROCESS_TASK:              
-            // HX711_Tare();           
+        case KEY_PROCESS_TASK:
+            if (current_display_state == DISPLAY_WEIGHING)
+            {
+                OLED_Clear();
+                current_display_state = DISPLAY_HISTORY;
+            }
+            else if (current_display_state == DISPLAY_HISTORY)
+            {
+                OLED_Clear();
+                current_display_state = DISPLAY_WEIGHING;
+            }
             Key2_press.State = KEY_UP;
             break;
     
