@@ -101,6 +101,43 @@ uint8_t Key1_scan(uint16_t Input_key)
             if (Input_Pin == 1)
             {
                 Key_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
+                //按键 1 任务：保存当前数据到 W25Q64
+                if (Weight >= 0.0f)
+                {
+                    WeightData[0] = ((uint8_t *)&Weight)[0];
+                    WeightData[1] = ((uint8_t *)&Weight)[1];
+                    WeightData[2] = ((uint8_t *)&Weight)[2];
+                    WeightData[3] = ((uint8_t *)&Weight)[3];
+                    
+                    WeightData[4] = ((uint8_t *)&UnitPrice)[0];
+                    WeightData[5] = ((uint8_t *)&UnitPrice)[1];
+                    WeightData[6] = ((uint8_t *)&UnitPrice)[2];
+                    WeightData[7] = ((uint8_t *)&UnitPrice)[3];
+                    
+                    WeightData[8] = ((uint8_t *)&TotalPrice)[0];
+                    WeightData[9] = ((uint8_t *)&TotalPrice)[1];
+                    WeightData[10] = ((uint8_t *)&TotalPrice)[2];
+                    WeightData[11] = ((uint8_t *)&TotalPrice)[3];
+                    
+                    WeightData[12] = ((uint8_t *)&history_index)[0];
+                    WeightData[13] = ((uint8_t *)&history_index)[1];
+                    WeightData[14] = ((uint8_t *)&history_index)[2];
+                    WeightData[15] = ((uint8_t *)&history_index)[3];
+                    
+                    if (SaveCount % 1024 == 0)
+                    {
+                        W25Q64_SectorErase(SaveCount * 16);
+                    }
+                    
+                    W25Q64_PageProgram(SaveCount * 16, WeightData, 16);
+                    SaveCount++;
+                    history_index++;
+                    SaveResult = 1;
+                }
+                else
+                {
+                    SaveResult = 2;
+                }                      
                 if (Input_Time > Key_press.Last_time + Key_LongPress_time) 
                 {
                     Key_press.State = KEY_LONG_PRESS;
@@ -148,28 +185,7 @@ uint8_t Key1_scan(uint16_t Input_key)
         
         //处理任务状态
         case KEY_PROCESS_TASK:
-            //按键 1 任务：保存当前数据到 W25Q64
-            if (Weight >= 0.0f)
-            {
-                WeightData[0] = ((uint8_t *)&Weight)[0];
-                WeightData[1] = ((uint8_t *)&Weight)[1];
-                WeightData[2] = ((uint8_t *)&Weight)[2];
-                WeightData[3] = ((uint8_t *)&Weight)[3];
-                
-                if (SaveCount % 1024 == 0)
-                {
-                    W25Q64_SectorErase(SaveCount * 4);
-                }
-                
-                W25Q64_PageProgram(SaveCount * 4, WeightData, 4);
-                SaveCount++;
-                
-                SaveResult = 1;  // 保存成功
-            }
-            else
-            {
-                SaveResult = 2;  // 重量为负
-            }                      
+            
     
             Key_press.State = KEY_UP;
             break;
@@ -231,12 +247,15 @@ uint8_t Key2_scan(uint16_t Input_key)
             if (Input_Pin == 1)
             {
                 Key2_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
-                //按键2 任务：去皮
-                  
+                if (current_display_state == DISPLAY_WEIGHING) 
+                {
+                    HX711_Tare();
+                   
+                }
                 if (Input_Time > Key2_press.Last_time + Key_LongPress_time) 
                 {
                     Key2_press.State = KEY_LONG_PRESS;
-                }
+                }                                  
             }
             else
             {
@@ -249,8 +268,17 @@ uint8_t Key2_scan(uint16_t Input_key)
         case  KEY_LONG_PRESS:
             if (Input_Pin == 1) 
             {
-                Key2_press.State = KEY_LONG_PRESS;//一直为长按状态
-                HX711_Tare();  
+                Key2_press.State = KEY_LONG_PRESS;//一直为长按状态        
+                 if (current_display_state == DISPLAY_WEIGHING) 
+                {
+                    OLED_Clear();
+                    current_display_state = DISPLAY_HISTORY;
+                }
+                else if(current_display_state == DISPLAY_HISTORY) 
+                {
+                    OLED_Clear();
+                    current_display_state = DISPLAY_WEIGHING;
+                }                            
             }
             else
             {
@@ -278,7 +306,7 @@ uint8_t Key2_scan(uint16_t Input_key)
         
         //处理任务状态
         case KEY_PROCESS_TASK:              
-            HX711_Tare();           
+            // HX711_Tare();           
             Key2_press.State = KEY_UP;
             break;
     
@@ -338,11 +366,23 @@ uint8_t Key3_scan(uint16_t Input_key)
             if (Input_Pin == 1)
             {
                 Key3_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
-                UnitPrice += 1.0f;
-                if (UnitPrice > 999.0f)
+                //按键3 任务：增加单价或增加查询索引
+                if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    UnitPrice = 999.0f;
-                }     
+                    save_index++;
+                    if (save_index >= history_index) 
+                    {
+                        save_index = history_index;
+                    }
+                }
+                else if (current_display_state == DISPLAY_WEIGHING) 
+                {
+                     UnitPrice += 1.0f;
+                    if (UnitPrice > 999.0f)
+                    {
+                        UnitPrice = 999.0f;
+                    }
+                }                    
                 if (Input_Time > Key3_press.Last_time + Key_LongPress_time) 
                 {
                     Key3_press.State = KEY_LONG_PRESS;
@@ -361,11 +401,14 @@ uint8_t Key3_scan(uint16_t Input_key)
             {
                 Key3_press.State = KEY_LONG_PRESS;//一直为长按状态
                 //按键3 任务：增加单价
-                UnitPrice += 3.0f;
-                if (UnitPrice > 999.0f)
+                if (current_display_state == DISPLAY_WEIGHING) 
                 {
-                    UnitPrice = 999.0f;
-                }
+                    UnitPrice += 3.0f;
+                    if (UnitPrice > 999.0f)
+                    {
+                        UnitPrice = 999.0f;
+                    }
+                }               
             }
             else
             {
@@ -454,12 +497,24 @@ uint8_t Key4_scan(uint16_t Input_key)
             if (Input_Pin == 1)
             {
                 Key4_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
-                //按键4 任务：减少单价
-                UnitPrice -= 1.0f;
-                if (UnitPrice < 0.0f)
+                //按键4 任务：减少单价或增加查询索引
+                if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    UnitPrice = 0.0f;
-                }                
+                    save_index--;
+                    if (save_index <= 0) 
+                    {
+                        save_index = history_index;
+                    }
+                }
+                else if (current_display_state == DISPLAY_WEIGHING) 
+                {
+                    UnitPrice -= 1.0f;
+                    if (UnitPrice < 0.0f)
+                    {
+                        UnitPrice = 0.0f;
+                    }                                   
+                }
+                
                 if (Input_Time > Key4_press.Last_time + Key_LongPress_time) 
                 {
                     Key4_press.State = KEY_LONG_PRESS;
@@ -478,11 +533,14 @@ uint8_t Key4_scan(uint16_t Input_key)
             {
                 Key4_press.State = KEY_LONG_PRESS;//一直为长按状态
                 //按键4 任务：减少单价
-                UnitPrice -= 3.0f;
-                if (UnitPrice < 0.0f)
+                if (current_display_state == DISPLAY_WEIGHING) 
                 {
-                    UnitPrice = 0.0f;
-                }
+                    UnitPrice -= 3.0f;
+                    if (UnitPrice < 0.0f)
+                    {
+                        UnitPrice = 0.0f;
+                    }
+                }               
             }
             else
             {
@@ -519,4 +577,20 @@ uint8_t Key4_scan(uint16_t Input_key)
     }
 
     return Key4_press.State;
+}
+
+HistoryRecord* Key_GetHistoryRecord(uint32_t index)
+{
+    static HistoryRecord record;
+    uint8_t data[16];
+    uint32_t address = index * 16;
+    
+    W25Q64_ReadData(address, data, 16);
+    
+    record.weight = *((float *)&data[0]);
+    record.unit_price = *((float *)&data[4]);
+    record.total_price = *((float *)&data[8]);
+    record.history_index = *((uint32_t *)&data[12]);
+    
+    return &record;
 }

@@ -29,6 +29,7 @@
 #include "Serial.h"
 #include "W25Q64.h"
 #include "Key.h"
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,12 +65,15 @@ void SystemClock_Config(void);
 int32_t Rawval = 0;
 float Weight = 0;
 uint32_t SaveCount = 0;
-uint8_t WeightData[4];
+uint8_t WeightData[16];
 uint8_t CalibrateState = 0;
 float KnownWeight = 100.0f;
 uint32_t SaveDisplayTime = 0;
 float UnitPrice = 0.0f;
 float TotalPrice = 0.0f;
+DisplayState current_display_state = DISPLAY_WEIGHING;
+uint32_t history_index = 0;
+uint32_t save_index = 0;
 /* USER CODE END 0 */
 
 /**
@@ -109,10 +113,6 @@ int main(void)
   HX711_KalmanInit(0.01f, 0.1f, 0.0f);
   W25Q64_Init();
   // OLED_ShowString(1, 1, "Weight:");
-  //显示重量
-  OLED_ShowCN(1, 1, 0, 1);
-  OLED_ShowCN(1, 2, 1, 1);
-  OLED_ShowString(1, 5, ":");
   // 1. 先去皮（确保秤上无物品）
   HX711_Tare();
   HAL_Delay(100);
@@ -124,6 +124,7 @@ int main(void)
   // 3. 再次去皮
   HX711_Tare();
   HAL_TIM_Base_Start_IT(&htim3);
+  // W25Q64_SectorErase(16);
 
   /* USER CODE END 2 */
 
@@ -134,60 +135,66 @@ int main(void)
     Rawval = HX711_Read();
     Weight = HX711_GetWeight(Rawval);
     Serial_Printf("weight:%.2f\r\n", Weight);
-    OLED_ShowFloat(1, 8, Weight, 5, 2);
     
-    // 计算总价
-    if (Weight >= 0.0f)
+    if (current_display_state == DISPLAY_WEIGHING)
     {
-        TotalPrice = Weight * UnitPrice;
-    }
-    else
-    {
-        TotalPrice = 0.0f;
-    }
-    
-    // 显示单价和总价
-    OLED_ShowString(2, 1, "Price:");
-    OLED_ShowFloat(2, 7, UnitPrice, 3, 2);
-    OLED_ShowString(3, 1, "Total:");
-    OLED_ShowFloat(3, 7, TotalPrice, 5, 2);
-    
-    // 处理保存结果显示
-    if (SaveResult != 0)
-    {
-        if (SaveResult == 1)
+        //显示重量
+        OLED_ShowCN(1, 1, 0, 1);
+        OLED_ShowCN(1, 2, 1, 1);
+        OLED_ShowString(1, 5, ":");
+        OLED_ShowString(1, 16, "g");
+        OLED_ShowFloat(1, 6, Weight, 5, 2);
+        
+        if (Weight >= 0.0f)
         {
-            OLED_ShowString(4, 1, "Save OK!     ");
+            TotalPrice = Weight * UnitPrice;
         }
-        else if (SaveResult == 2)
+        else
         {
-            OLED_ShowString(4, 1, "Weight < 0!  ");
+            TotalPrice = 0.0f;
         }
-        SaveDisplayTime = HAL_GetTick();
-        SaveResult = 0;
+        
+        OLED_ShowString(2, 1, "Price:");
+        OLED_ShowFloat(2, 7, UnitPrice, 3, 2);
+        OLED_ShowString(3, 1, "Total:");
+        OLED_ShowFloat(3, 7, TotalPrice, 5, 2);
+        
+        if (SaveResult != 0)
+        {
+            if (SaveResult == 1)
+            {
+                OLED_ShowString(4, 1, "Save OK!     ");
+            }
+            else if (SaveResult == 2)
+            {
+                OLED_ShowString(4, 1, "Weight < 0!  ");
+            }
+            SaveDisplayTime = HAL_GetTick();
+            SaveResult = 0;
+        }
+        
+        if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
+        {
+            OLED_ShowString(4, 1, "             ");
+            SaveDisplayTime = 0;
+        }
     }
-    
-    // 1s 后清除显示
-    if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
+    else if (current_display_state == DISPLAY_HISTORY)
     {
-        OLED_ShowString(4, 1, "             ");
-        SaveDisplayTime = 0;
+        HistoryRecord *record = Key_GetHistoryRecord(save_index);
+        
+        OLED_ShowString(1, 1, "Weight:");
+        OLED_ShowFloat(1, 7, record->weight, 5, 2);
+        OLED_ShowString(1, 16, "g");
+        OLED_ShowString(2, 1, "Price:");
+        OLED_ShowFloat(2, 7, record->unit_price, 3, 2);
+        OLED_ShowString(3, 1, "Total:");
+        OLED_ShowFloat(3, 7, record->total_price, 5, 2);
+        OLED_ShowString(4, 1, "Index:");
+        OLED_ShowFloat(4, 7, record->history_index, 2, 0);
+        
+        HAL_Delay(100);
     }
-    
-    // if (CalibrateState == 1)
-    // {
-    //     OLED_Clear();
-    //     OLED_ShowString(1, 1, "Put Weight!");
-    //     OLED_ShowString(2, 1, "g");
-    //     HAL_Delay(2000);
-    //     HX711_Calibrate(KnownWeight);
-    //     OLED_Clear();
-    //     OLED_ShowString(1, 1, "Calib OK!");
-    //     HAL_Delay(1000);
-    //     OLED_Clear();
-    //     OLED_ShowString(1, 1, "Weight:");
-    //     CalibrateState = 0;
-    // }
     
     HAL_Delay(100);
     /* USER CODE END WHILE */
@@ -245,10 +252,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == (&htim3))
     {
-      Key1_scan(Key1);
-      Key2_scan(Key2);
-      Key3_scan(Key3);
-      Key4_scan(Key4);
+        Key1_scan(Key1);
+        Key2_scan(Key2);
+        Key3_scan(Key3);
+        Key4_scan(Key4);
     }
 }
 /* USER CODE END 4 */

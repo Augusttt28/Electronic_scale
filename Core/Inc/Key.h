@@ -22,6 +22,13 @@ typedef enum
     KEY_PROCESS_TASK
 }Key_state;
 
+//显示状态枚举
+typedef enum
+{
+    DISPLAY_WEIGHING = 0,
+    DISPLAY_HISTORY = 1
+}DisplayState;
+
 //状态机状态结构体
 typedef struct 
 {
@@ -29,15 +36,27 @@ typedef struct
     uint32_t Last_time;//每一步处理后的时间
 }Key_t;
 
-extern uint8_t SaveResult;
+//历史记录结构体
+typedef struct
+{
+    float weight;
+    float unit_price;
+    float total_price;
+    uint32_t history_index;
+}HistoryRecord;
 
+extern DisplayState current_display_state;
+extern uint8_t SaveResult;
 extern float UnitPrice;
 extern float TotalPrice;
+extern uint32_t history_index;
+extern uint32_t save_index;
 
 uint8_t Key1_scan(uint16_t Input_key);
 uint8_t Key2_scan(uint16_t Input_key);
 uint8_t Key3_scan(uint16_t Input_key);
 uint8_t Key4_scan(uint16_t Input_key);
+HistoryRecord* Key_GetHistoryRecord(uint32_t index);
 
 
 #endif 
