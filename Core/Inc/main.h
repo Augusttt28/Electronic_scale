@@ -83,7 +83,14 @@ void Error_Handler(void);
 #define OLED_W_SDA_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define DISPLAY_Zhong  OLED_ShowCN(1, 1, 0, 1)
+#define DISPLAY_Liang  OLED_ShowCN(1, 2, 1, 1)
+#define DISPLAY_Dan    OLED_ShowCN(2, 1, 2, 1)
+#define DISPLAY_Jia    OLED_ShowCN(2, 2, 3, 1)
+#define DISPLAY_Zong   OLED_ShowCN(3, 1, 4, 1)
+#define DISPLAY_Jiage  OLED_ShowCN(3, 2, 5, 1)
+#define DISPLAY_Yuan   OLED_ShowCN(3, 13, 10, 1)
+#define Init_timeout   5000 // 5 seconds
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -442,4 +442,16 @@ void OLED_ShowBMP(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uin
     }
 }
 
+/**
+  * @brief  OLED显示保存成功
+  * @param  无
+  * @retval 无
+  */
+void OLED_SHOW_SAVE_OK(void)
+{
+  OLED_ShowCN(4, 1, 6, 1);//保
+  OLED_ShowCN(4, 2, 7, 1);//存
+  OLED_ShowCN(4, 3, 8, 1);//成
+  OLED_ShowCN(4, 4, 9, 1);//功
+}
 

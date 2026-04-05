@@ -23,7 +23,14 @@ extern uint32_t SaveCount;
 extern uint8_t WeightData[4];
 extern float UnitPrice;
 extern float TotalPrice;
+extern uint32_t history_index;
 uint8_t SaveResult = 0;  // 0: 无操作, 1: 保存成功, 2: 重量为负
+
+Key_Flag Key_flag=
+{
+    .KEY1_CLEAR_FLAG = 0,
+    .KEY2_TARE_FLAG = 0
+};
 
 Key_t Key_press = 
 {
@@ -71,6 +78,7 @@ uint8_t Key1_scan(uint16_t Input_key)
             if (Input_Pin == 0)
             {
                 Key_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
+                Key_flag.KEY1_CLEAR_FLAG = 0;//重置清空记录标志位
             }
             else
             {
@@ -102,42 +110,42 @@ uint8_t Key1_scan(uint16_t Input_key)
             {
                 Key_press.State = KEY_DOWN;//检测到一直按下则一直为按下状态
                 //按键 1 任务：保存当前数据到 W25Q64
-                if (Weight >= 0.0f)
-                {
-                    WeightData[0] = ((uint8_t *)&Weight)[0];
-                    WeightData[1] = ((uint8_t *)&Weight)[1];
-                    WeightData[2] = ((uint8_t *)&Weight)[2];
-                    WeightData[3] = ((uint8_t *)&Weight)[3];
+                // if (Weight >= 0.0f)
+                // {
+                //     WeightData[0] = ((uint8_t *)&Weight)[0];
+                //     WeightData[1] = ((uint8_t *)&Weight)[1];
+                //     WeightData[2] = ((uint8_t *)&Weight)[2];
+                //     WeightData[3] = ((uint8_t *)&Weight)[3];
                     
-                    WeightData[4] = ((uint8_t *)&UnitPrice)[0];
-                    WeightData[5] = ((uint8_t *)&UnitPrice)[1];
-                    WeightData[6] = ((uint8_t *)&UnitPrice)[2];
-                    WeightData[7] = ((uint8_t *)&UnitPrice)[3];
+                //     WeightData[4] = ((uint8_t *)&UnitPrice)[0];
+                //     WeightData[5] = ((uint8_t *)&UnitPrice)[1];
+                //     WeightData[6] = ((uint8_t *)&UnitPrice)[2];
+                //     WeightData[7] = ((uint8_t *)&UnitPrice)[3];
                     
-                    WeightData[8] = ((uint8_t *)&TotalPrice)[0];
-                    WeightData[9] = ((uint8_t *)&TotalPrice)[1];
-                    WeightData[10] = ((uint8_t *)&TotalPrice)[2];
-                    WeightData[11] = ((uint8_t *)&TotalPrice)[3];
+                //     WeightData[8] = ((uint8_t *)&TotalPrice)[0];
+                //     WeightData[9] = ((uint8_t *)&TotalPrice)[1];
+                //     WeightData[10] = ((uint8_t *)&TotalPrice)[2];
+                //     WeightData[11] = ((uint8_t *)&TotalPrice)[3];
                     
-                    WeightData[12] = ((uint8_t *)&history_index)[0];
-                    WeightData[13] = ((uint8_t *)&history_index)[1];
-                    WeightData[14] = ((uint8_t *)&history_index)[2];
-                    WeightData[15] = ((uint8_t *)&history_index)[3];
+                //     WeightData[12] = ((uint8_t *)&history_index)[0];
+                //     WeightData[13] = ((uint8_t *)&history_index)[1];
+                //     WeightData[14] = ((uint8_t *)&history_index)[2];
+                //     WeightData[15] = ((uint8_t *)&history_index)[3];
                     
-                    if (SaveCount % 1024 == 0)
-                    {
-                        W25Q64_SectorErase(SaveCount * 16);
-                    }
+                //     if (SaveCount % 1024 == 0)
+                //     {
+                //         W25Q64_SectorErase(SaveCount * 16);
+                //     }
                     
-                    W25Q64_PageProgram(SaveCount * 16, WeightData, 16);
-                    SaveCount++;
-                    history_index++;
-                    SaveResult = 1;
-                }
-                else
-                {
-                    SaveResult = 2;
-                }                      
+                //     W25Q64_PageProgram(SaveCount * 16, WeightData, 16);
+                //     SaveCount++;
+                //     history_index++;
+                //     SaveResult = 1;
+                // }
+                // else
+                // {
+                //     SaveResult = 2;
+                // }                      
                 if (Input_Time > Key_press.Last_time + Key_LongPress_time) 
                 {
                     Key_press.State = KEY_LONG_PRESS;
@@ -156,13 +164,24 @@ uint8_t Key1_scan(uint16_t Input_key)
             {
                 Key_press.State = KEY_LONG_PRESS;//一直为长按状态
                 //按键 1 任务：清空记录
-                SaveCount = 0;
-                W25Q64_ClearAllRecords();                                                   
+                if (Key_flag.KEY1_CLEAR_FLAG == 0) 
+                {
+                    SaveCount = 0;
+                    W25Q64_ClearAllRecords(); // 清空W25Q64中的所有记录
+                    history_index = 0;//重置历史记录索引
+                    save_index = 0;//重置历史记录显示索引
+                    OLED_ShowString(4, 1, "Cleared OK");
+                    Key_flag.KEY1_CLEAR_FLAG = 1;//设置清空标志位防止重复清空，导致卡死
+                    if (Input_Time > Key_press.Last_time + Dispaly_ClearTime) 
+                    {
+                        OLED_ShowString(4, 1, "             ");
+                    }   
+                }                                                              
             }
             else
             {
                 //检测到抬起则进入消抖
-                Key_press.State = KEY_UP_Delay;
+                Key_press.State = KEY_UP;
                 Key_press.Last_time = Input_Time;
             }
             break;
@@ -185,7 +204,42 @@ uint8_t Key1_scan(uint16_t Input_key)
         
         //处理任务状态
         case KEY_PROCESS_TASK:
-            
+            if (Weight >= 0.0f)
+            {
+                WeightData[0] = ((uint8_t *)&Weight)[0];
+                WeightData[1] = ((uint8_t *)&Weight)[1];
+                WeightData[2] = ((uint8_t *)&Weight)[2];
+                WeightData[3] = ((uint8_t *)&Weight)[3];
+                
+                WeightData[4] = ((uint8_t *)&UnitPrice)[0];
+                WeightData[5] = ((uint8_t *)&UnitPrice)[1];
+                WeightData[6] = ((uint8_t *)&UnitPrice)[2];
+                WeightData[7] = ((uint8_t *)&UnitPrice)[3];
+                
+                WeightData[8] = ((uint8_t *)&TotalPrice)[0];
+                WeightData[9] = ((uint8_t *)&TotalPrice)[1];
+                WeightData[10] = ((uint8_t *)&TotalPrice)[2];
+                WeightData[11] = ((uint8_t *)&TotalPrice)[3];
+                
+                WeightData[12] = ((uint8_t *)&history_index)[0];
+                WeightData[13] = ((uint8_t *)&history_index)[1];
+                WeightData[14] = ((uint8_t *)&history_index)[2];
+                WeightData[15] = ((uint8_t *)&history_index)[3];
+                
+                if (SaveCount % 1024 == 0)
+                {
+                    W25Q64_SectorErase(SaveCount * 16);
+                }
+                
+                W25Q64_PageProgram(SaveCount * 16, WeightData, 16);
+                SaveCount++;
+                history_index++;
+                SaveResult = 1;
+            }
+            else
+            {
+                SaveResult = 2;
+            }                 
     
             Key_press.State = KEY_UP;
             break;
@@ -217,6 +271,7 @@ uint8_t Key2_scan(uint16_t Input_key)
             if (Input_Pin == 0)
             {
                 Key2_press.State = KEY_UP;//检测到一直按下，一直为按键未按下状态
+                Key_flag.KEY2_TARE_FLAG = 0;//重置去皮标志位
             }
             else
             {
@@ -272,7 +327,11 @@ uint8_t Key2_scan(uint16_t Input_key)
                 // }
                 if (current_display_state == DISPLAY_WEIGHING)
                 {
-                    HX711_Tare();
+                    if (Key_flag.KEY2_TARE_FLAG == 0) 
+                    {
+                        HX711_Tare();//去皮
+                        Key_flag.KEY1_CLEAR_FLAG = 1;//设置去皮标志位防止重复去皮
+                    }                   
                 }
             }
             else
@@ -374,7 +433,7 @@ uint8_t Key3_scan(uint16_t Input_key)
                     save_index++;
                     if (save_index >= history_index) 
                     {
-                        save_index = history_index;
+                        save_index = history_index - 1;
                     }
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 
@@ -505,7 +564,7 @@ uint8_t Key4_scan(uint16_t Input_key)
                     save_index--;
                     if (save_index <= 0) 
                     {
-                        save_index = history_index;
+                        save_index = 0;
                     }
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 

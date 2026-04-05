@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "gpio.h"
+#include <stdint.h>
 
 #define Key1 Key1_Pin
 #define Key2 Key2_Pin
@@ -10,6 +11,7 @@
 #define Key4 Key4_Pin
 #define Key_Delay_time 20
 #define Key_LongPress_time 500
+#define Dispaly_ClearTime 1000
 
 //枚举，显示按键所有的状态
 typedef enum
@@ -35,6 +37,12 @@ typedef struct
     Key_state State;//当前状态
     uint32_t Last_time;//每一步处理后的时间
 }Key_t;
+
+typedef struct 
+{
+    uint8_t KEY1_CLEAR_FLAG;//清空记录标志位
+    uint8_t KEY2_TARE_FLAG;//去皮标志位
+}Key_Flag;//按键标志位结构体
 
 //历史记录结构体
 typedef struct

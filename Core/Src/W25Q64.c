@@ -2,6 +2,8 @@
 #include "W25Q64_Ins.h"
 #include "stm32f1xx_hal.h"
 
+extern uint32_t SaveCount;
+
 /**
   * 函    数：W25Q64初始化
   * 参    数：无
@@ -159,8 +161,18 @@ void W25Q64_ChipErase(void)
 void W25Q64_ClearAllRecords(void)
 {
 	uint32_t i;
+	uint32_t sector_count;
 	
-	for (i = 0; i < 2048; i++)
+	if (SaveCount > 2048)
+	{
+		sector_count = 2048;
+	}
+	else
+	{
+		sector_count = SaveCount + 1;
+	}
+	
+	for (i = 0; i < sector_count; i++)
 	{
 		W25Q64_SectorErase(i * 4096);
 	}

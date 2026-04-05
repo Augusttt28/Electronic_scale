@@ -109,6 +109,8 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
+  OLED_ShowString(2, 1, "Elector_SCALE");
+  OLED_ShowString(3, 1, "Initializing...");
   HX711_Init();
   HX711_KalmanInit(0.01f, 0.1f, 0.0f);
   W25Q64_Init();
@@ -125,7 +127,7 @@ int main(void)
   HX711_Tare();
   HAL_TIM_Base_Start_IT(&htim3);
   // W25Q64_SectorErase(16);
-
+  OLED_Clear();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -139,31 +141,43 @@ int main(void)
     if (current_display_state == DISPLAY_WEIGHING)
     {
         //显示重量
-        OLED_ShowCN(1, 1, 0, 1);
-        OLED_ShowCN(1, 2, 1, 1);
+        // OLED_ShowCN(1, 1, 0, 1);
+        // OLED_ShowCN(1, 2, 1, 1);
+        DISPLAY_Zhong;
+        DISPLAY_Liang;
         OLED_ShowString(1, 5, ":");
         OLED_ShowString(1, 16, "g");
         OLED_ShowFloat(1, 6, Weight, 5, 2);
         
         if (Weight >= 0.0f)
         {
-            TotalPrice = Weight * UnitPrice;
+            TotalPrice = Weight * UnitPrice/500.0f;
         }
         else
         {
             TotalPrice = 0.0f;
         }
         
-        OLED_ShowString(2, 1, "Price:");
-        OLED_ShowFloat(2, 7, UnitPrice, 3, 2);
-        OLED_ShowString(3, 1, "Total:");
-        OLED_ShowFloat(3, 7, TotalPrice, 5, 2);
+        // OLED_ShowString(2, 1, "Price:");
+        DISPLAY_Dan;
+        DISPLAY_Jia;
+        OLED_ShowString(2, 5, ":");
+        OLED_ShowFloat(2, 6, UnitPrice, 3, 1);
+        OLED_ShowString(2, 12, "/500g");
+        // OLED_ShowString(3, 1, "Total:");
+        DISPLAY_Zong;
+        DISPLAY_Jiage;
+        OLED_ShowString(3, 5, ":");
+        OLED_ShowFloat(3, 6, TotalPrice, 3, 2);
+        DISPLAY_Yuan;
+        // OLED_ShowString(3, 13, "￥");
         
         if (SaveResult != 0)
         {
             if (SaveResult == 1)
             {
-                OLED_ShowString(4, 1, "Save OK!     ");
+                // OLED_ShowString(4, 1, "Save OK!     ");
+              OLED_SHOW_SAVE_OK();
             }
             else if (SaveResult == 2)
             {
@@ -183,15 +197,28 @@ int main(void)
     {
         HistoryRecord *record = Key_GetHistoryRecord(save_index);
         
-        OLED_ShowString(1, 1, "Weight:");
-        OLED_ShowFloat(1, 7, record->weight, 5, 2);
+        // OLED_ShowString(1, 1, "Weight:");
+        DISPLAY_Zhong;
+        DISPLAY_Liang;
+        OLED_ShowString(1, 5, ":");
+        OLED_ShowFloat(1, 6, record->weight, 5, 2);
         OLED_ShowString(1, 16, "g");
-        OLED_ShowString(2, 1, "Price:");
-        OLED_ShowFloat(2, 7, record->unit_price, 3, 2);
-        OLED_ShowString(3, 1, "Total:");
-        OLED_ShowFloat(3, 7, record->total_price, 5, 2);
+        DISPLAY_Dan;
+        DISPLAY_Jia;
+        // OLED_ShowString(2, 1, "Price:");
+        OLED_ShowString(2, 5, ":");
+        OLED_ShowFloat(2, 6, record->unit_price, 3, 1);
+        OLED_ShowString(2, 12, "/500g");
+        DISPLAY_Zong;
+        DISPLAY_Jiage;
+        // OLED_ShowString(3, 1, "Total:");
+        OLED_ShowString(3, 5, ":");
+        OLED_ShowFloat(3, 6, record->total_price, 3, 2);
+        DISPLAY_Yuan;
+        // OLED_ShowString(3, 13, "￥");
         OLED_ShowString(4, 1, "Index:");
-        OLED_ShowFloat(4, 7, record->history_index, 2, 0);
+        // OLED_ShowFloat(4, 7, record->history_index + 1, 2, 0);
+        OLED_ShowNum(4, 7, record->history_index + 1, 2);
         
         HAL_Delay(100);
     }
