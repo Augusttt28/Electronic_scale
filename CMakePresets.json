@@ -4,10 +4,11 @@
         {
             "name": "default",
             "hidden": true,
-            "generator": "Ninja",
+            "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
+                "CMAKE_MAKE_PROGRAM": "F:/msys64/ucrt64/bin/mingw32-make.exe"
             }
         },
         {

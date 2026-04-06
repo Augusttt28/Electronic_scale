@@ -62,18 +62,16 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int32_t Rawval = 0;
-float Weight = 0;
-uint32_t SaveCount = 0;
-uint8_t WeightData[16];
-uint8_t CalibrateState = 0;
-float KnownWeight = 100.0f;
-uint32_t SaveDisplayTime = 0;
-float UnitPrice = 0.0f;
-float TotalPrice = 0.0f;
-DisplayState current_display_state = DISPLAY_WEIGHING;
-uint32_t history_index = 0;
-uint32_t save_index = 0;
+int32_t Rawval = 0;//HX711原始数据
+float Weight = 0;//重量
+uint32_t SaveCount = 0;//保存结果
+uint8_t WeightData[16];//重量数据数组
+uint32_t SaveDisplayTime = 0;//保存结果显示时间
+float UnitPrice = 0.0f;//单价
+float TotalPrice = 0.0f;//总价
+DisplayState current_display_state = DISPLAY_WEIGHING;//显示模式
+uint32_t history_index = 0;//历史记录索引
+uint32_t save_index = 0;//查询记录索引
 /* USER CODE END 0 */
 
 /**
@@ -112,7 +110,7 @@ int main(void)
   OLED_ShowString(2, 1, "Elector_SCALE");
   OLED_ShowString(3, 1, "Initializing...");
   HX711_Init();
-  HX711_KalmanInit(0.01f, 0.1f, 0.0f);
+  HX711_KalmanInit(0.05f, 0.1f, 0.0f);
   W25Q64_Init();
   // OLED_ShowString(1, 1, "Weight:");
   // 1. 先去皮（确保秤上无物品）
@@ -182,6 +180,10 @@ int main(void)
             else if (SaveResult == 2)
             {
                 OLED_ShowString(4, 1, "Weight < 0!  ");
+            }
+            else if (SaveResult == 3) 
+            {
+                OLED_ShowString(4, 1, "OverWeight!  ");
             }
             SaveDisplayTime = HAL_GetTick();
             SaveResult = 0;

@@ -236,9 +236,13 @@ uint8_t Key1_scan(uint16_t Input_key)
                 history_index++;
                 SaveResult = 1;
             }
-            else
+            else if(Weight < 0.0f)
             {
                 SaveResult = 2;
+            }
+            else if(Weight > 9999.9f)
+            {
+                SaveResult = 3;//超出量程
             }                 
     
             Key_press.State = KEY_UP;
@@ -361,6 +365,7 @@ uint8_t Key2_scan(uint16_t Input_key)
             if (current_display_state == DISPLAY_WEIGHING)
             {
                 OLED_Clear();
+                save_index = 0;//切换界面时重置索引
                 current_display_state = DISPLAY_HISTORY;
             }
             else if (current_display_state == DISPLAY_HISTORY)
@@ -430,11 +435,11 @@ uint8_t Key3_scan(uint16_t Input_key)
                 //按键3 任务：增加单价或增加查询索引
                 if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    save_index++;
-                    if (save_index >= history_index) 
+                    if (save_index > history_index) 
                     {
                         save_index = history_index - 1;
                     }
+                    save_index++;                   
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 
                 {
@@ -561,11 +566,11 @@ uint8_t Key4_scan(uint16_t Input_key)
                 //按键4 任务：减少单价或增加查询索引
                 if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    save_index--;
-                    if (save_index <= 0) 
+                    if (save_index < 0) 
                     {
                         save_index = 0;
                     }
+                    save_index--;                   
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 
                 {
