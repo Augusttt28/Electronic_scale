@@ -7,6 +7,7 @@
             "generator": "MinGW Makefiles",
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/cmake/gcc-arm-none-eabi.cmake",
+            "cmakeExecutable": "F:/CMake/bin/cmake.exe",
             "cacheVariables": {
                 "CMAKE_MAKE_PROGRAM": "F:/msys64/ucrt64/bin/mingw32-make.exe"
             }
