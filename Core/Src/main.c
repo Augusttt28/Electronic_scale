@@ -210,6 +210,20 @@ int main(void)
     }
     else if (current_display_state == DISPLAY_HISTORY)
     {
+        if (history_index == 0)
+        {
+            OLED_ShowString(1, 1, "No Record       ");
+            OLED_ShowString(2, 1, "               ");
+            OLED_ShowString(3, 1, "               ");
+            OLED_ShowString(4, 1, "               ");
+            HAL_Delay(100);
+            continue;
+        }
+        if (save_index >= history_index)
+        {
+            save_index = history_index - 1;
+        }
+
         HistoryRecord *record = Key_GetHistoryRecord(save_index);
         
         // OLED_ShowString(1, 1, "Weight:");
