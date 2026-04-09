@@ -114,7 +114,13 @@ int main(void)
   W25Q64_Init();
   // OLED_ShowString(1, 1, "Weight:");
   // 1. 先去皮（确保秤上无物品）
-  HX711_Tare();
+  while (!HX711_TareTimeout(5000))
+  {
+      OLED_Clear();
+      OLED_ShowString(2, 1, "SCALE");
+      OLED_ShowString(3, 1, "NOT CONNECT");
+      HAL_Delay(500);
+  }
   HAL_Delay(100);
   
   // // 2. 放置已知重量的物品进行校准（例如1000g）
@@ -122,7 +128,13 @@ int main(void)
   HAL_Delay(100);
   
   // 3. 再次去皮
-  HX711_Tare();
+  while (!HX711_TareTimeout(5000))
+  {
+      OLED_Clear();
+      OLED_ShowString(2, 1, "SCALE");
+      OLED_ShowString(3, 1, "NOT CONNECT");
+      HAL_Delay(500);
+  }
   HAL_TIM_Base_Start_IT(&htim3);
   // W25Q64_SectorErase(16);
   OLED_Clear();
@@ -167,7 +179,8 @@ int main(void)
         DISPLAY_Jiage;
         OLED_ShowString(3, 5, ":");
         OLED_ShowFloat(3, 6, TotalPrice, 3, 2);
-        DISPLAY_Yuan;
+        // 
+        OLED_ShowString(3, 13, "yuan");
         // OLED_ShowString(3, 13, "￥");
         
         if (SaveResult != 0)
@@ -216,8 +229,8 @@ int main(void)
         // OLED_ShowString(3, 1, "Total:");
         OLED_ShowString(3, 5, ":");
         OLED_ShowFloat(3, 6, record->total_price, 3, 2);
-        DISPLAY_Yuan;
-        // OLED_ShowString(3, 13, "￥");
+        // DISPLAY_Yuan;
+        OLED_ShowString(3, 13, "yuan");
         OLED_ShowString(4, 1, "Index:");
         // OLED_ShowFloat(4, 7, record->history_index + 1, 2, 0);
         OLED_ShowNum(4, 7, record->history_index + 1, 2);

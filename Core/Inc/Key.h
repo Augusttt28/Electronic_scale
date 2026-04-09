@@ -11,7 +11,7 @@
 #define Key4 Key4_Pin
 #define Key_Delay_time 20
 #define Key_LongPress_time 500
-#define Dispaly_ClearTime 1000
+#define Dispaly_ClearTime 500
 
 //枚举，显示按键所有的状态
 typedef enum

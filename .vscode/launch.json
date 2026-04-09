@@ -12,6 +12,13 @@
             "cwd": "${workspaceFolder}",
             "preBuild": "${command:st-stm32-ide-debug-launch.build}",
             "runEntry": "main",
+            "interface": "swd",
+            "stopAtEntry": false,
+            "serverReset": "Connect under reset",
+            "serverArgs": [
+                "--frequency",
+                "400"
+            ],
             "imagesAndSymbols": [
                 {
                     "imageFileName": "${command:st-stm32-ide-debug-launch.get-projects-binary-from-context1}"
