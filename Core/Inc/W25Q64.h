@@ -8,5 +8,6 @@ void W25Q64_SectorErase(uint32_t Address);
 void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count);
 void W25Q64_ChipErase(void);
 void W25Q64_ClearAllRecords(void);
+void W25Q64_RestoreHistoryFromFlash(void);
 
 #endif

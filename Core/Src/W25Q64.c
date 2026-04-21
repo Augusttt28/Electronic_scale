@@ -1,8 +1,76 @@
 #include "MySPI.h"
 #include "W25Q64_Ins.h"
 #include "stm32f1xx_hal.h"
+#include <string.h>
 
 extern uint32_t SaveCount;
+extern uint32_t history_index;
+
+void W25Q64_ReadData(uint32_t Address, uint8_t *DataArray, uint32_t Count);
+
+/** 每条记录 16 字节，与 Key.c 中 PageProgram(SaveCount*16) 一致 */
+#define W25Q64_RECORD_SIZE 16u
+
+static uint8_t W25Q64_RecordSlotEmpty(const uint8_t *buf)
+{
+	uint16_t i;
+	for (i = 0; i < W25Q64_RECORD_SIZE; i++)
+	{
+		if (buf[i] != 0xFFu)
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/** 第一个全 0xFF 的槽下标 = 已写入条数（连续从地址 0 存放时） */
+static uint32_t W25Q64_FindFirstEmptyRecordSlot(void)
+{
+	uint8_t buf[16];
+	const uint32_t max_slots = (8u * 1024u * 1024u) / W25Q64_RECORD_SIZE;
+	uint32_t lo = 0;
+	uint32_t hi = max_slots;
+
+	while (lo < hi)
+	{
+		uint32_t mid = lo + (hi - lo) / 2u;
+		W25Q64_ReadData(mid * W25Q64_RECORD_SIZE, buf, W25Q64_RECORD_SIZE);
+		if (W25Q64_RecordSlotEmpty(buf))
+		{
+			hi = mid;
+		}
+		else
+		{
+			lo = mid + 1u;
+		}
+	}
+	return lo;
+}
+
+/**
+ * 从 Flash 恢复 SaveCount / history_index（与 Key_GetHistoryRecord 解析 layout 一致）。
+ * 条数由“第一个空槽”确定；最后一条 data[12..15] 为保存时写入的 history_index，RAM 中应为 其+1。
+ */
+void W25Q64_RestoreHistoryFromFlash(void)
+{
+	uint8_t data[16];
+	uint32_t n;
+	uint32_t stored_hist_idx;
+
+	n = W25Q64_FindFirstEmptyRecordSlot();
+	SaveCount = n;
+
+	if (n == 0u)
+	{
+		history_index = 0u;
+		return;
+	}
+
+	W25Q64_ReadData((n - 1u) * W25Q64_RECORD_SIZE, data, W25Q64_RECORD_SIZE);
+	memcpy(&stored_hist_idx, &data[12], sizeof(stored_hist_idx));
+	history_index = stored_hist_idx + 1u;
+}
 
 /**
   * 函    数：W25Q64初始化

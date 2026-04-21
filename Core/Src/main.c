@@ -112,6 +112,7 @@ int main(void)
   HX711_Init();
   HX711_KalmanInit(0.05f, 0.1f, 0.0f);
   W25Q64_Init();
+  W25Q64_RestoreHistoryFromFlash();//恢复历史记录索引
   // OLED_ShowString(1, 1, "Weight:");
   // 1. 先去皮（确保秤上无物品）
   while (!HX711_TareTimeout(5000))
