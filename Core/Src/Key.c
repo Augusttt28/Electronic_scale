@@ -334,7 +334,7 @@ uint8_t Key2_scan(uint16_t Input_key)
                     if (Key_flag.KEY2_TARE_FLAG == 0) 
                     {
                         HX711_Tare();//去皮
-                        Key_flag.KEY1_CLEAR_FLAG = 1;//设置去皮标志位防止重复去皮
+                        Key_flag.KEY2_TARE_FLAG= 1;//设置去皮标志位防止重复去皮
                     }                   
                 }
             }
@@ -435,11 +435,19 @@ uint8_t Key3_scan(uint16_t Input_key)
                 //按键3 任务：增加单价或增加查询索引
                 if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    if (save_index > history_index) 
+                    // 有效索引范围: [0, history_index-1]
+                    if (history_index == 0)
+                    {
+                        save_index = 0;
+                    }
+                    else if (save_index < (history_index - 1))
+                    {
+                        save_index++;
+                    }
+                    else
                     {
                         save_index = history_index - 1;
-                    }
-                    save_index++;                   
+                    }                   
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 
                 {
@@ -566,11 +574,14 @@ uint8_t Key4_scan(uint16_t Input_key)
                 //按键4 任务：减少单价或增加查询索引
                 if (current_display_state == DISPLAY_HISTORY) 
                 {
-                    if (save_index < 0) 
+                     if (save_index > 0)
+                    {
+                        save_index--;
+                    }
+                    else
                     {
                         save_index = 0;
-                    }
-                    save_index--;                   
+                    }                
                 }
                 else if (current_display_state == DISPLAY_WEIGHING) 
                 {

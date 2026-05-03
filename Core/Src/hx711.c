@@ -2,7 +2,7 @@
 #include "stm32f1xx_hal.h"
 
 static KalmanFilter kf;
-static float scale_factor = 200.0f;
+static float scale_factor = 215.73f;
 static int32_t tare_offset = 130;
 
 //HX711初始化
