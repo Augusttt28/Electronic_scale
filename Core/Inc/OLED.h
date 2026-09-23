@@ -23,5 +23,7 @@ void oled_show_picture(uint8_t x, uint8_t y, uint8_t width, uint8_t height, cons
 void OLED_ShowCN(uint8_t Line, uint8_t Column, uint8_t Num, uint8_t mode);
 void OLED_ShowBMP(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t *bmp, uint8_t mode) ;
 void OLED_SHOW_SAVE_OK(void);
+void OLED_DrawBMPToBuffer(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t *bmp, uint8_t mode);
+void OLED_FlushBuffer(void);
 
 #endif

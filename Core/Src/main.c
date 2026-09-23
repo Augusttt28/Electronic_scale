@@ -39,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern const uint8_t BMP_ICON[];
+extern const uint8_t* const BMP_FRAMES[];
 
 /* USER CODE END PD */
 
@@ -107,125 +107,133 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
-  OLED_ShowString(2, 1, "Elector_SCALE");
-  OLED_ShowString(3, 1, "Initializing...");
-  HX711_Init();
-  HX711_KalmanInit(0.05f, 0.1f, 0.0f);
-  W25Q64_Init();
+  // OLED_ShowString(2, 1, "Elector_SCALE");
+  // OLED_ShowString(3, 1, "Initializing...");
+  // HX711_Init();
+  // HX711_KalmanInit(0.05f, 0.1f, 0.0f);
+  // W25Q64_Init();
   // OLED_ShowString(1, 1, "Weight:");
   // 1. 先去皮（确保秤上无物品）
-  HX711_Tare();
+  // HX711_Tare();
   HAL_Delay(100);
   
   // // 2. 放置已知重量的物品进行校准（例如1000g）
   // HX711_Calibrate(1000.0f);
-  HAL_Delay(100);
+  // HAL_Delay(100);
   
   // 3. 再次去皮
-  HX711_Tare();
+  // HX711_Tare();
   HAL_TIM_Base_Start_IT(&htim3);
   // W25Q64_SectorErase(16);
-  OLED_Clear();
+    OLED_Clear();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint8_t frame_idx = 0;
+
   while (1)
   {
-    Rawval = HX711_Read();
-    Weight = HX711_GetWeight(Rawval);
-    Serial_Printf("weight:%.2f\r\n", Weight);
+    OLED_DrawBMPToBuffer(20, 0, 64, 64, BMP_FRAMES[frame_idx], 0);
+    OLED_FlushBuffer();
+
+    frame_idx = (frame_idx + 1) % 28;
+
+    // HAL_Delay(5);  // 50ms = 20fps
+    // Rawval = HX711_Read();
+    // Weight = HX711_GetWeight(Rawval);
+    // Serial_Printf("weight:%.2f\r\n", Weight);
     
-    if (current_display_state == DISPLAY_WEIGHING)
-    {
-        //显示重量
-        // OLED_ShowCN(1, 1, 0, 1);
-        // OLED_ShowCN(1, 2, 1, 1);
-        DISPLAY_Zhong;
-        DISPLAY_Liang;
-        OLED_ShowString(1, 5, ":");
-        OLED_ShowString(1, 16, "g");
-        OLED_ShowFloat(1, 6, Weight, 5, 2);
+    // if (current_display_state == DISPLAY_WEIGHING)
+    // {
+    //     //显示重量
+    //     // OLED_ShowCN(1, 1, 0, 1);
+    //     // OLED_ShowCN(1, 2, 1, 1);
+    //     DISPLAY_Zhong;
+    //     DISPLAY_Liang;
+    //     OLED_ShowString(1, 5, ":");
+    //     OLED_ShowString(1, 16, "g");
+    //     OLED_ShowFloat(1, 6, Weight, 5, 2);
         
-        if (Weight >= 0.0f)
-        {
-            TotalPrice = Weight * UnitPrice/500.0f;
-        }
-        else
-        {
-            TotalPrice = 0.0f;
-        }
+    //     if (Weight >= 0.0f)
+    //     {
+    //         TotalPrice = Weight * UnitPrice/500.0f;
+    //     }
+    //     else
+    //     {
+    //         TotalPrice = 0.0f;
+    //     }
         
-        // OLED_ShowString(2, 1, "Price:");
-        DISPLAY_Dan;
-        DISPLAY_Jia;
-        OLED_ShowString(2, 5, ":");
-        OLED_ShowFloat(2, 6, UnitPrice, 3, 1);
-        OLED_ShowString(2, 12, "/500g");
-        // OLED_ShowString(3, 1, "Total:");
-        DISPLAY_Zong;
-        DISPLAY_Jiage;
-        OLED_ShowString(3, 5, ":");
-        OLED_ShowFloat(3, 6, TotalPrice, 3, 2);
-        DISPLAY_Yuan;
-        // OLED_ShowString(3, 13, "￥");
+    //     // OLED_ShowString(2, 1, "Price:");
+    //     DISPLAY_Dan;
+    //     DISPLAY_Jia;
+    //     OLED_ShowString(2, 5, ":");
+    //     OLED_ShowFloat(2, 6, UnitPrice, 3, 1);
+    //     OLED_ShowString(2, 12, "/500g");
+    //     // OLED_ShowString(3, 1, "Total:");
+    //     DISPLAY_Zong;
+    //     DISPLAY_Jiage;
+    //     OLED_ShowString(3, 5, ":");
+    //     OLED_ShowFloat(3, 6, TotalPrice, 3, 2);
+    //     DISPLAY_Yuan;
+    //     // OLED_ShowString(3, 13, "￥");
         
-        if (SaveResult != 0)
-        {
-            if (SaveResult == 1)
-            {
-                // OLED_ShowString(4, 1, "Save OK!     ");
-              OLED_SHOW_SAVE_OK();
-            }
-            else if (SaveResult == 2)
-            {
-                OLED_ShowString(4, 1, "Weight < 0!  ");
-            }
-            else if (SaveResult == 3) 
-            {
-                OLED_ShowString(4, 1, "OverWeight!  ");
-            }
-            SaveDisplayTime = HAL_GetTick();
-            SaveResult = 0;
-        }
+    //     if (SaveResult != 0)
+    //     {
+    //         if (SaveResult == 1)
+    //         {
+    //             // OLED_ShowString(4, 1, "Save OK!     ");
+    //           OLED_SHOW_SAVE_OK();
+    //         }
+    //         else if (SaveResult == 2)
+    //         {
+    //             OLED_ShowString(4, 1, "Weight < 0!  ");
+    //         }
+    //         else if (SaveResult == 3) 
+    //         {
+    //             OLED_ShowString(4, 1, "OverWeight!  ");
+    //         }
+    //         SaveDisplayTime = HAL_GetTick();
+    //         SaveResult = 0;
+    //     }
         
-        if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
-        {
-            OLED_ShowString(4, 1, "             ");
-            SaveDisplayTime = 0;
-        }
-    }
-    else if (current_display_state == DISPLAY_HISTORY)
-    {
-        HistoryRecord *record = Key_GetHistoryRecord(save_index);
+    //     if (SaveDisplayTime != 0 && (HAL_GetTick() - SaveDisplayTime) > 1000)
+    //     {
+    //         OLED_ShowString(4, 1, "             ");
+    //         SaveDisplayTime = 0;
+    //     }
+    // }
+    // else if (current_display_state == DISPLAY_HISTORY)
+    // {
+    //     HistoryRecord *record = Key_GetHistoryRecord(save_index);
         
-        // OLED_ShowString(1, 1, "Weight:");
-        DISPLAY_Zhong;
-        DISPLAY_Liang;
-        OLED_ShowString(1, 5, ":");
-        OLED_ShowFloat(1, 6, record->weight, 5, 2);
-        OLED_ShowString(1, 16, "g");
-        DISPLAY_Dan;
-        DISPLAY_Jia;
-        // OLED_ShowString(2, 1, "Price:");
-        OLED_ShowString(2, 5, ":");
-        OLED_ShowFloat(2, 6, record->unit_price, 3, 1);
-        OLED_ShowString(2, 12, "/500g");
-        DISPLAY_Zong;
-        DISPLAY_Jiage;
-        // OLED_ShowString(3, 1, "Total:");
-        OLED_ShowString(3, 5, ":");
-        OLED_ShowFloat(3, 6, record->total_price, 3, 2);
-        DISPLAY_Yuan;
-        // OLED_ShowString(3, 13, "￥");
-        OLED_ShowString(4, 1, "Index:");
-        // OLED_ShowFloat(4, 7, record->history_index + 1, 2, 0);
-        OLED_ShowNum(4, 7, record->history_index + 1, 2);
+    //     // OLED_ShowString(1, 1, "Weight:");
+    //     DISPLAY_Zhong;
+    //     DISPLAY_Liang;
+    //     OLED_ShowString(1, 5, ":");
+    //     OLED_ShowFloat(1, 6, record->weight, 5, 2);
+    //     OLED_ShowString(1, 16, "g");
+    //     DISPLAY_Dan;
+    //     DISPLAY_Jia;
+    //     // OLED_ShowString(2, 1, "Price:");
+    //     OLED_ShowString(2, 5, ":");
+    //     OLED_ShowFloat(2, 6, record->unit_price, 3, 1);
+    //     OLED_ShowString(2, 12, "/500g");
+    //     DISPLAY_Zong;
+    //     DISPLAY_Jiage;
+    //     // OLED_ShowString(3, 1, "Total:");
+    //     OLED_ShowString(3, 5, ":");
+    //     OLED_ShowFloat(3, 6, record->total_price, 3, 2);
+    //     DISPLAY_Yuan;
+    //     // OLED_ShowString(3, 13, "￥");
+    //     OLED_ShowString(4, 1, "Index:");
+    //     // OLED_ShowFloat(4, 7, record->history_index + 1, 2, 0);
+    //     OLED_ShowNum(4, 7, record->history_index + 1, 2);
         
-        HAL_Delay(100);
-    }
+    //     HAL_Delay(100);
+    // }
     
-    HAL_Delay(100);
+    // HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

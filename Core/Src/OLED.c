@@ -455,3 +455,24 @@ void OLED_SHOW_SAVE_OK(void)
   OLED_ShowCN(4, 4, 9, 1);//功
 }
 
+void OLED_DrawBMPToBuffer(uint8_t x, uint8_t y, uint8_t width, uint8_t height, const uint8_t *bmp, uint8_t mode)
+{
+    uint8_t page_end = y + height / 8;
+    uint8_t col_end = x + width;
+    uint16_t index = 0;
+
+    for (uint8_t page = y; page < page_end; page++)
+        for (uint8_t col = x; col < col_end; col++)
+            OLED_Buffer[page][col] = mode ? bmp[index++] : ~bmp[index++];
+}
+
+void OLED_FlushBuffer(void)
+{
+    for (uint8_t page = 0; page < 8; page++)
+    {
+        OLED_SetCursor(page, 0);
+        for (uint8_t col = 0; col < 128; col++)
+            OLED_WriteData(OLED_Buffer[page][col]);
+    }
+}
+
